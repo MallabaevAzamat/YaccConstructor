@@ -334,73 +334,73 @@ let searchMain (config:Config) =
 
     let assembiesOfLongEdges = score config.FileForLongEdges config.MiddlesBias [||] assembiesOfLongEdges
 
-    assembliesOf16s
-    |> ResizeArray.iter (fun a -> 
-        if a.InfernalData.Value.ModelFrom < 5 then a.Head <- true
-        if a.Edges.[0].Tag.id < 0 then a.Head <- true // First edge is a part of long edges
-        if a.InfernalData.Value.ModelTo >= 1420 then a.Tail <- true
-        if longEdges |> Array.exists (fun e -> e.Tag.id = a.Edges.[a.Edges.Count - 1].Tag.id) then a.Tail <- true
-        )
-    
-    let midleEdgesToProcess = assembliesOf16s |> ResizeArray.filter (fun a -> not a.Full) |> Array.ofSeq
+//    assembliesOf16s
+//    |> ResizeArray.iter (fun a -> 
+//        if a.InfernalData.Value.ModelFrom < 5 then a.Head <- true
+//        if a.Edges.[0].Tag.id < 0 then a.Head <- true // First edge is a part of long edges
+//        if a.InfernalData.Value.ModelTo >= 1420 then a.Tail <- true
+//        if longEdges |> Array.exists (fun e -> e.Tag.id = a.Edges.[a.Edges.Count - 1].Tag.id) then a.Tail <- true
+//        )
+//    
+//    let midleEdgesToProcess = assembliesOf16s |> ResizeArray.filter (fun a -> not a.Full) |> Array.ofSeq
+//
+//    let g = sourceGraph.ToAdjacencyGraph(true)
+//    let headsAndTails =
+//        midleEdgesToProcess
+//        |> Array.map (fun a -> 
+//            let headsFinalV = a.Edges.[0].Source
+//            let headsLengthLim = a.InfernalData.Value.ModelFrom + 10
+//            let heads = 
+//                let paths = getPaths g false headsFinalV (fun (curE:TaggedEdge<_,_>) curL -> curL >= headsLengthLim) headsLengthLim
+//                paths
+//                |> Array.ofSeq
+//
+//            let tailsStartV = a.Edges.[a.Edges.Count - 1].Target
+//            let tailsLengthLim = 1500 - a.InfernalData.Value.ModelTo 
+//            let tails = 
+//                getPaths g true tailsStartV (fun (curE:TaggedEdge<_,_>) curL -> curL >= tailsLengthLim) tailsLengthLim
+//                |> Array.ofSeq
+//            heads, a, tails
+//            )
 
-    let g = sourceGraph.ToAdjacencyGraph(true)
-    let headsAndTails =
-        midleEdgesToProcess
-        |> Array.map (fun a -> 
-            let headsFinalV = a.Edges.[0].Source
-            let headsLengthLim = a.InfernalData.Value.ModelFrom + 10
-            let heads = 
-                let paths = getPaths g false headsFinalV (fun (curE:TaggedEdge<_,_>) curL -> curL >= headsLengthLim) headsLengthLim
-                paths
-                |> Array.ofSeq
-
-            let tailsStartV = a.Edges.[a.Edges.Count - 1].Target
-            let tailsLengthLim = 1500 - a.InfernalData.Value.ModelTo 
-            let tails = 
-                getPaths g true tailsStartV (fun (curE:TaggedEdge<_,_>) curL -> curL >= tailsLengthLim) tailsLengthLim
-                |> Array.ofSeq
-            heads, a, tails
-            )
-
-    let searchCfg = config.HeadSearchConfig
-
-    let assembliesOf16sHeads = new ResizeArray<AssemblyOf16s<_>>()    
-
-    let tailsCount = ref 0
-
-    headsAndTails 
-    |> Array.iter (fun (h,_,t) -> 
-        h |> Array.iter (fun h ->
-            let h = ResizeArray.rev h
-            if h.Count > 0 && assembliesOf16sHeads |> ResizeArray.exists(fun a -> a.EqualsPath h) |> not
-            then assembliesOf16sHeads.Add (new AssemblyOf16s<_>(!globalResultCount, h, head = true))
-            tailsCount := !tailsCount + t.Length
-            incr globalResultCount)
-        )
-
-    config.Lap (sprintf "Heads and tails preparing. Tails %A" !tailsCount)
-
-    let assembliesOf16sHeads = score searchCfg.OutFileName config.HedsBias longEdges assembliesOf16sHeads
-
-    config.Lap "Heads scoring with Infernal"
-
-    let assembliesOf16sHeadsMiddles = new ResizeArray<AssemblyOf16s<_>>()
-
-    mergeAssemblies
-        assembliesOf16sHeads
-        assembliesOf16s
-        assembliesOf16sHeadsMiddles
-        (new Dictionary<_,_>())
-        (fun edges -> 
-            incr globalResultCount
-            new AssemblyOf16s<_>(!globalResultCount, edges, head = true, middle = true))
-
-    //assembliesOf16sHeadsMiddles |> ResizeArray.map (fun a -> a.ConvertToString(longEdges)) |> fun s -> System.IO.File.WriteAllLines(config.FileForHeadAndMiddles,s)
-    let assembliesOf16sHeadsMiddles = score config.FileForHeadAndMiddles config.HeadsMiddlesBias longEdges assembliesOf16sHeadsMiddles
-    
-    config.Lap "Heads and middles combining"
-    
+//    let searchCfg = config.HeadSearchConfig
+//
+//    let assembliesOf16sHeads = new ResizeArray<AssemblyOf16s<_>>()    
+//
+//    let tailsCount = ref 0
+//
+//    headsAndTails 
+//    |> Array.iter (fun (h,_,t) -> 
+//        h |> Array.iter (fun h ->
+//            let h = ResizeArray.rev h
+//            if h.Count > 0 && assembliesOf16sHeads |> ResizeArray.exists(fun a -> a.EqualsPath h) |> not
+//            then assembliesOf16sHeads.Add (new AssemblyOf16s<_>(!globalResultCount, h, head = true))
+//            tailsCount := !tailsCount + t.Length
+//            incr globalResultCount)
+//        )
+//
+//    config.Lap (sprintf "Heads and tails preparing. Tails %A" !tailsCount)
+//
+//    let assembliesOf16sHeads = score searchCfg.OutFileName config.HedsBias longEdges assembliesOf16sHeads
+//
+//    config.Lap "Heads scoring with Infernal"
+//
+//    let assembliesOf16sHeadsMiddles = new ResizeArray<AssemblyOf16s<_>>()
+//
+//    mergeAssemblies
+//        assembliesOf16sHeads
+//        assembliesOf16s
+//        assembliesOf16sHeadsMiddles
+//        (new Dictionary<_,_>())
+//        (fun edges -> 
+//            incr globalResultCount
+//            new AssemblyOf16s<_>(!globalResultCount, edges, head = true, middle = true))
+//
+//    //assembliesOf16sHeadsMiddles |> ResizeArray.map (fun a -> a.ConvertToString(longEdges)) |> fun s -> System.IO.File.WriteAllLines(config.FileForHeadAndMiddles,s)
+//    let assembliesOf16sHeadsMiddles = score config.FileForHeadAndMiddles config.HeadsMiddlesBias longEdges assembliesOf16sHeadsMiddles
+//    
+//    config.Lap "Heads and middles combining"
+//    
 //    let edgesForTailsSearch = new HashSet<_> ()
 //    
 //    headsAndTails
